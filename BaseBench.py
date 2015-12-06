@@ -1,6 +1,3 @@
-__author__ = 'mousavi'
-__author__ = 'mousavi'
-
 import urllib2, sys, time, random
 
 for i in range(100000):

@@ -1,10 +1,13 @@
 import datetime
 import logging
 import memcache
+import json
+# noinspection PyUnresolvedReferences
 from tornado import websocket, web, ioloop
 # from DatabaseOp import AddRequest
-from DatabaseOp import  UpdateDelivery
-import sys, time
+from DatabaseOp import update_delivery_json
+import sys
+import time
 LOG_FILENAME = 'Log/RequestLog.out'
 logging.basicConfig(filename=LOG_FILENAME,
                             level=logging.DEBUG,
@@ -33,27 +36,37 @@ class IndexHandler(web.RequestHandler):
 
 class ApiHandler(web.RequestHandler):
     @web.asynchronous
-    def get(self, *args):
-        aaa = time.time()
-        self._data = {
-            'transactionId': self.get_argument("Id"),
-            'subscriber': self.get_argument("subscriber"),
-            'status': self.get_argument("status"),
-            'shortcode': self.get_argument("shortcode"),
-        }
-        logging.debug('This message should go to the log file')
-        sys.stdout.write(str(time.time() - aaa)+"\n")
+    def post(self):
         sys.stdout.write(self.request.remote_ip)
         sys.stdout.write(" [%s] " % datetime.datetime.now())
-        sys.stdout.write(self.request.uri)
+        sys.stdout.write(self.request.body)
+        sys.stdout.flush()
         self.finish()
 
+    # @web.asynchronous
+    # def get(self, *args):
+    #     aaa = time.time()
+    #     self._data = {
+    #         'transactionId': self.get_argument("Id"),
+    #         'subscriber': self.get_argument("subscriber"),
+    #         'status': self.get_argument("status"),
+    #         'shortcode': self.get_argument("shortcode"),
+    #     }
+    #     logging.debug('This message should go to the log file')
+    #     sys.stdout.write(str(time.time() - aaa)+"\n")
+    #     sys.stdout.write(self.request.remote_ip)
+    #     sys.stdout.write(" [%s] " % datetime.datetime.now())
+    #     sys.stdout.write(self.request.uri)
+    #     self.finish()
+
     def on_finish(self):
-        checkcache = Caching()
-        s = checkcache.get(str(self._data['transactionId']))
-        if s is None:
-            checkcache.set(str(self._data['transactionId']), self._data['subscriber'])
-            UpdateDelivery.delay(**self._data)
+        # checkcache = Caching()
+        # s = checkcache.get(str(self._data['transactionId']))
+        # if s is None:
+        #     checkcache.set(str(self._data['transactionId']), self._data['subscriber'])
+            # UpdateDelivery.delay(**self._data)
+        update_delivery_json.delay(**self.request.body)
+
 
 app = web.Application([
     (r'/', IndexHandler),
